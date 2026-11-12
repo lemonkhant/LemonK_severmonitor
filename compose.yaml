@@ -1,0 +1,49 @@
+name: lemonk
+
+services:
+  dashboard:
+    build: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    environment:
+      MONITOR_INVENTORY: /app/data/inventory.json
+      WAZUH_URL: ${WAZUH_URL:-}
+      WAZUH_USER: ${WAZUH_USER:-}
+      WAZUH_PASSWORD: ${WAZUH_PASSWORD:-}
+      WAZUH_CA_FILE: ${WAZUH_CA_FILE:-}
+    volumes:
+      - inventory-data:/app/data
+      - ./config/live:/config:ro
+    depends_on:
+      - loki
+      - victoriametrics
+  gateway:
+    image: otel/opentelemetry-collector-contrib:0.138.0
+    command: ["--config=/etc/otelcol-contrib/gateway.yaml"]
+    volumes:
+      - ./config/gateway.yaml:/etc/otelcol-contrib/gateway.yaml:ro
+    ports:
+      - "${OTLP_BIND:-127.0.0.1}:4318:4318"
+    depends_on:
+      - loki
+      - victoriametrics
+    restart: unless-stopped
+  loki:
+    image: grafana/loki:3.6.7
+    command: ["-config.file=/etc/loki/pilot.yaml"]
+    volumes:
+      - ./config/loki.yaml:/etc/loki/pilot.yaml:ro
+      - loki-data:/loki
+    restart: unless-stopped
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.135.0
+    command: ["-storageDataPath=/storage", "-retentionPeriod=30d", "-opentelemetry.usePrometheusNaming"]
+    volumes:
+      - metrics-data:/storage
+    restart: unless-stopped
+
+volumes:
+  inventory-data:
+  loki-data:
+  metrics-data:

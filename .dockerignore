@@ -1,0 +1,17 @@
+.git
+.env
+.env.*
+web/node_modules
+web/dist
+config/live
+data
+private
+secrets
+enrollment
+**/*.pem
+**/*.key
+**/*.ppk
+**/known_hosts
+**/authorized_keys
+**/admin-password
+docs

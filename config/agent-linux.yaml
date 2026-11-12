@@ -1,0 +1,41 @@
+receivers:
+  hostmetrics:
+    collection_interval: 15s
+    scrapers:
+      cpu: {}
+      memory: {}
+      filesystem: {}
+      network: {}
+  filelog:
+    include: [/var/log/sentinel/*.log]
+    start_at: end
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 128
+    spike_limit_mib: 32
+  resource/asset:
+    attributes:
+      - key: host_id
+        value: ${env:SENTINEL_HOST_ID}
+        action: upsert
+      - key: service.name
+        value: sentinel-host
+        action: upsert
+  batch: {}
+
+exporters:
+  otlphttp:
+    endpoint: ${env:SENTINEL_OTLP_ENDPOINT}
+
+service:
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors: [memory_limiter, resource/asset, batch]
+      exporters: [otlphttp]
+    logs:
+      receivers: [filelog]
+      processors: [memory_limiter, resource/asset, batch]
+      exporters: [otlphttp]

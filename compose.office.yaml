@@ -1,0 +1,15 @@
+services:
+  dashboard:
+    environment:
+      SENTINEL_REQUIRE_AUTH: "1"
+      SENTINEL_ADMIN_USER: ${SENTINEL_ADMIN_USER:-admin}
+      SENTINEL_ADMIN_PASSWORD_FILE: /run/sentinel-office/admin-password
+      SENTINEL_SSH_DIR: /run/sentinel-office/ssh
+      SENTINEL_SECURE_COOKIES: ${SENTINEL_SECURE_COOKIES:-0}
+    volumes:
+      - type: bind
+        source: ${SENTINEL_OFFICE_DIR:-/etc/sentinel-monitor}
+        target: /run/sentinel-office
+        read_only: true
+        bind:
+          create_host_path: false
